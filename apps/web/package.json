@@ -1,0 +1,20 @@
+{
+    "name": "@geocoding/web",
+    "version": "1.0.0",
+    "private": true,
+    "dependencies": {
+        "@mantine/core": "^9.5.1",
+        "@mantine/hooks": "^9.5.1",
+        "@tanstack/react-query": "^5.101.4",
+        "leaflet": "^1.9.4",
+        "react": "^19.2.8",
+        "react-dom": "^19.2.8",
+        "react-leaflet": "^5.0.0",
+        "tslib": "catalog:"
+    },
+    "devDependencies": {
+        "@testing-library/jest-dom": "^7.0.1",
+        "@testing-library/user-event": "^14.6.4",
+        "@types/leaflet": "^1.9.22"
+    }
+}

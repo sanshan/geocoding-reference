@@ -1,0 +1,59 @@
+.page {
+    width: 100%;
+    max-width: 1440px;
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 32px;
+    box-sizing: border-box;
+}
+
+.header {
+    margin-bottom: 24px;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 32px;
+}
+
+.header p {
+    margin: 8px 0 0;
+}
+
+.import {
+    margin-bottom: 24px;
+    padding: 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+.search {
+    width: 100%;
+    margin-bottom: 24px;
+}
+
+.content {
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr);
+    gap: 20px;
+}
+
+.details {
+    padding: 24px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+.map {
+    min-width: 0;
+}
+
+@media (max-width: 800px) {
+    .page {
+        padding: 16px;
+    }
+
+    .content {
+        grid-template-columns: 1fr;
+    }
+}

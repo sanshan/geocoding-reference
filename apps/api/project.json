@@ -1,0 +1,78 @@
+{
+    "name": "@geocoding/api",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "apps/api/src",
+    "projectType": "application",
+    "tags": [],
+    "targets": {
+        "build": {
+            "executor": "@nx/js:tsc",
+            "options": {
+                "outputPath": "apps/api/dist",
+                "main": "apps/api/src/main.ts",
+                "tsConfig": "apps/api/tsconfig.app.json",
+                "assets": ["apps/api/src/assets"]
+            }
+        },
+
+        "serve": {
+            "continuous": true,
+            "executor": "@nx/js:node",
+            "defaultConfiguration": "development",
+            "options": {
+                "buildTarget": "@geocoding/api:build"
+            },
+            "configurations": {
+                "development": {
+                    "buildTarget": "@geocoding/api:build"
+                },
+                "production": {
+                    "buildTarget": "@geocoding/api:build"
+                }
+            }
+        },
+
+        "test": {
+            "options": {
+                "passWithNoTests": true
+            }
+        },
+
+        "test:external": {
+            "executor": "@nx/jest:jest",
+            "options": {
+                "jestConfig": "apps/api/jest.external.config.ts",
+                "passWithNoTests": false,
+                "runInBand": true
+            }
+        },
+
+        "migration:generate": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "pnpm -w --filter @geocoding/api run migration:generate"
+            }
+        },
+
+        "migration:run": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "pnpm -w --filter @geocoding/api run migration:run"
+            }
+        },
+
+        "migration:revert": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "pnpm -w --filter @geocoding/api run migration:revert"
+            }
+        },
+
+        "migration:show": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "pnpm -w --filter @geocoding/api run migration:show"
+            }
+        }
+    }
+}
