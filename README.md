@@ -1,108 +1,199 @@
-# GeocodingReference
+# Geocoding
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+Version: 1.0.0
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
+A full-stack geocoding service built as an Nx monorepo.
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/getting-started/tutorials/npm-workspaces-tutorial?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+The application provides:
 
-## Run tasks
+-   external geographic dataset import;
+-   location search with autocomplete support;
+-   reverse geocoding by coordinates;
+-   interactive map integration.
 
-To run tasks with Nx use:
+## Architecture
 
-```sh
-npx nx <target> <project-name>
+The project is organized as an Nx workspace:
+
+    apps/
+    ├── api        # NestJS backend
+    └── web        # React frontend
+
+## Technology Stack
+
+### Backend
+
+-   Node.js
+-   NestJS
+-   TypeScript
+-   TypeORM
+-   PostgreSQL
+-   PostGIS
+
+### Frontend
+
+-   React
+-   TypeScript
+-   Leaflet
+-   OpenStreetMap tiles
+
+### Infrastructure
+
+-   Docker Compose
+-   PostgreSQL/PostGIS container
+-   Dedicated migration container
+-   nginx for frontend delivery
+
+## Running locally
+
+Requirements:
+
+-   Docker
+-   Docker Compose
+-   Node.js 24+
+-   pnpm
+
+Install dependencies:
+
+``` bash
+pnpm install
 ```
 
-For example:
+Start the application:
 
-```sh
-npx nx build myproject
+``` bash
+docker compose up --build
 ```
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+The startup flow:
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+    database
+        |
+        | healthcheck
+        v
+    migrations
+        |
+        | completed successfully
+        v
+    api
+        |
+        v
+    web
 
-## Versioning and releasing
+Frontend:
 
-To version and release the library use
+    http://localhost:4200
 
-```
-npx nx release
-```
+API:
 
-Pass `--dry-run` to see what would happen without actually releasing the library.
+    http://localhost:3000
 
-[Learn more about Nx release &raquo;](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+## Database
 
-## Add new projects
+The project uses PostgreSQL with PostGIS.
 
-While you could add new projects to your workspace manually, you might want to leverage [Nx plugins](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) and their [code generation](https://nx.dev/features/generate-code?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) feature.
+PostGIS was selected because geocoding requires spatial operations:
 
-To install a new plugin you can use the `nx add` command. Here's an example of adding the React plugin:
-```sh
-npx nx add @nx/react
-```
+-   storing coordinates;
+-   spatial indexing;
+-   future distance and nearest-location queries.
 
-Use the plugin's generator to create new projects. For example, to create a new React app or library:
+Coordinates are stored using:
 
-```sh
-# Generate an app
-npx nx g @nx/react:app demo
+    geography(Point,4326)
 
-# Generate a library
-npx nx g @nx/react:lib some-lib
-```
+with a GiST spatial index.
 
-You can use `npx nx list` to get a list of installed plugins. Then, run `npx nx list <plugin-name>` to learn about more specific capabilities of a particular plugin. Alternatively, [install Nx Console](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) to browse plugins and generators in your IDE.
+## Data Import
 
-[Learn more about Nx plugins &raquo;](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) | [Browse the plugin registry &raquo;](https://nx.dev/plugin-registry?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+The application supports importing ZIP code data from an external
+dataset.
 
-## Set up CI!
+The import flow:
 
-### Step 1
+    External dataset
+            |
+            v
+    Import use case
+            |
+            v
+    Repository
+            |
+            v
+    PostgreSQL/PostGIS
 
-To connect to Nx Cloud, run the following command:
+The import process is implemented as an application workflow rather than
+manual database loading.
 
-```sh
-npx nx connect
-```
+## API
 
-Connecting to Nx Cloud ensures a [fast and scalable CI](https://nx.dev/ci/intro/why-nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
+### Health check
 
-- [Remote caching](https://nx.dev/ci/features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/ci/features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/ci/features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/ci/features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+    GET /api/health
 
-### Step 2
+### Search locations
 
-Use the following command to configure a CI workflow for your workspace:
+Autocomplete search supports:
 
-```sh
-npx nx g ci-workflow
-```
+-   ZIP code;
+-   city name;
+-   partial input.
 
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+Example:
 
-## Install Nx Console
+    GET /geocoding/search?q=90210
 
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
+### Reverse geocoding
 
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+Find location information by coordinates:
 
-## Useful links
+    GET /geocoding/reverse?latitude=34.09&longitude=-118.4
 
-Learn more:
+## Frontend
 
-- [Learn more about this workspace setup](https://nx.dev/getting-started/tutorials/npm-workspaces-tutorial?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+The UI provides two connected workflows.
 
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+### Search
+
+-   User enters a location query.
+-   Suggestions are loaded from the backend.
+-   Selecting a result moves the map and places a marker.
+
+### Map interaction
+
+-   User clicks on the map.
+-   Coordinates are sent to reverse geocoding.
+-   The resolved location is displayed in the interface.
+
+## Technical decisions
+
+### Why PostGIS?
+
+A regular relational database can store coordinates, but PostGIS
+provides:
+
+-   spatial data types;
+-   spatial indexes;
+-   future support for geographic queries.
+
+### Why separate migration container?
+
+Database schema changes should not be coupled with application startup.
+
+The migration container:
+
+-   waits for database readiness;
+-   applies migrations;
+-   exits successfully;
+-   allows API startup only after schema preparation.
+
+## What I would improve with more time
+
+-   better fuzzy search ranking;
+-   pagination;
+-   distributed caching;
+-   background import workers;
+-   import progress persistence;
+-   API rate limiting;
+-   observability metrics and tracing;
+-   more integration tests.
