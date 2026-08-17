@@ -55,13 +55,13 @@ Requirements:
 
 Install dependencies:
 
-``` bash
+```bash
 pnpm install
 ```
 
 Start the application:
 
-``` bash
+```bash
 docker compose up --build
 ```
 
@@ -87,6 +87,56 @@ Frontend:
 API:
 
     http://localhost:3000
+
+## Testing
+
+The repository separates fast automated tests, service-level API E2E tests, browser E2E tests, and an explicit external-provider smoke test. This keeps the normal development and CI test path deterministic while still providing a way to verify the real GeoNames integration when required.
+
+### Unit and integration tests
+
+Run the regular test targets across the workspace:
+
+```bash
+pnpm nx run-many -t test
+```
+
+These tests cover application logic, HTTP controllers, persistence behavior, dataset parsing, and frontend components without depending on the live external dataset provider.
+
+### API E2E tests
+
+Run the backend E2E suite with:
+
+```bash
+pnpm nx run @geocoding/api-e2e:e2e
+```
+
+The automated API E2E environment deliberately does **not** download the ZIP dataset from GeoNames. Nx starts a small local fixture HTTP server from `apps/api-e2e/scripts/fixture-server.mjs`, which serves the committed `apps/api-e2e/fixtures/US.zip`. The API process is then started with `DATASET_URL` pointing to that local server.
+
+This preserves the real HTTP download and ZIP-processing path while removing an external network dependency from the automated suite. As a result, E2E runs are reproducible, fast, and are not affected by provider availability, rate limits, network failures, or upstream dataset changes.
+
+### Browser E2E tests
+
+The React application is covered by Playwright E2E tests:
+
+```bash
+pnpm nx run @geocoding/web-e2e:e2e
+```
+
+Playwright starts the complete test stack: a local dataset fixture server, the real API, and the web application. The API again receives `DATASET_URL` pointing to the local fixture server rather than GeoNames. The suite exercises the user-facing import, search, and reverse-geocoding workflows against the running application.
+
+The browser E2E fixture is stored in `apps/web-e2e/fixtures/US.zip` and is served by `apps/web-e2e/scripts/fixture-server.mjs`.
+
+### Manual external-provider E2E smoke test
+
+The real GeoNames integration is intentionally tested separately because it crosses the system boundary and depends on a third-party service. Run it explicitly with:
+
+```bash
+pnpm nx run @geocoding/api:test:external
+```
+
+Unlike the automated E2E suites, this test uses the configured external `DATASET_URL` and streams the real GeoNames dataset. It verifies that the provider is reachable and that the current upstream archive can still be downloaded, decompressed, parsed, and mapped into application records.
+
+This test is intended for manual verification of the external integration, for example before a release or while diagnosing provider-related issues. It should not be treated as part of the deterministic CI gate: a third-party outage or upstream data change should not make the application's normal test suite flaky.
 
 ## Database
 
